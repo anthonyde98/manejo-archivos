@@ -1,0 +1,57 @@
+<section class="mis-archivos container m-5 mx-auto">
+    <div class="section-title bg-light p-3 rounded w-25 mx-auto">
+        <h2 class="text-center">Banco de archivos</h2>
+    </div>
+    <div class="content">
+        <div class="banco bg-light p-4 mx-2">
+            <div class="tabla-container">
+                <table class="table">
+                    <tbody>
+                      <tr>
+                        <td><input class="form-check-input" type="checkbox" value="" id="flexCheckDefault"></td>
+                        <td>archivoNombre.pdf</td>
+                        <td>tipo</td>
+                        <td>span</td>
+                        <td><i id="delete-archivo" class="fa-solid fa-xmark"></i></td>
+                      </tr>
+                      <tr>
+                        <td><input class="form-check-input" type="checkbox" value="" id="flexCheckDefault"></td>
+                        <td>archivoNombre.pdf</td>
+                        <td>tipo</td>
+                        <td>size</td>
+                        <td><i id="delete-archivo" class="fa-solid fa-xmark"></i></td>
+                      </tr>
+                      <tr>
+                        <td><input class="form-check-input" type="checkbox" value="" id="flexCheckDefault"></td>
+                        <td>archivoNombre.pdf</td>
+                        <td>tipo</td>
+                        <td>size</td>
+                        <td><i id="delete-archivo" class="fa-solid fa-xmark"></i></td>
+                      </tr>
+                    </tbody>
+                  </table>
+            </div>
+        </div>
+        <div class="add-archivos  bg-light p-4 mx-2">
+            <h5 class="text-center">Agregar archivos</h5>
+            <div class="mt-4 mb-3">
+                <input class="form-control" type="file" id="formFile" multiple (change)="fileBrowser($event.target)">
+            </div>
+            <p class="text-center fw-bold">O</p>
+            <div class="drag-drop">
+                <div class="pre-archivos" appDnd (fileDropped)="onFileDropped($event)" [style.display]="preFiles.length > 0 ? 'grid' : 'block'">
+                    <div *ngIf="preFiles.length === 0" class="add-something">
+                        <i id="inbox" class="fa-solid fa-inbox"></i>
+                        <p> Arrastralos aquí</p>
+                    </div>
+                    <div *ngFor="let file of preFiles; let i = index" class="pre-archivo mx-1 mb-1">
+                        <i id="delete-pre-archivo" class="fa-solid fa-rectangle-xmark" (click)="deleteDroppedFile(i)"></i>
+                        <i id="pre-archivo-icon" class="fa-solid fa-{{ file.type }}"></i>
+                        <p class="pre-name">{{ file.name.length > 7 ? (file.name | slice:0:4) + '...' + (file.name.split('.').pop()) : file.name }}</p>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-primary d-block mx-auto mt-3" (click)="saveFiles()" [disabled]="!btnActivo || (droppedFiles.length === 0 && selectedFiles.length === 0)">Subir archivos</button>
+        </div>
+    </div>
+</section>
