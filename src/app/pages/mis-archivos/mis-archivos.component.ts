@@ -1,4 +1,9 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
+import { ToastrService } from 'ngx-toastr';
+import { Archivo, ArchivoService } from 'src/app/services/archivo.service';
+import { UsuarioService } from 'src/app/services/usuario.service';
+import { take } from 'rxjs';
+import * as Prism from 'prismjs';
 
 @Component({
   selector: 'app-mis-archivos',
@@ -6,6 +11,7 @@ import { Component, OnInit } from '@angular/core';
   styleUrls: ['./mis-archivos.component.css']
 })
 export class MisArchivosComponent implements OnInit {
+  @ViewChild('codeEle') codeEle!: ElementRef;
   hardTypes = {
     cs: "code",
     php: "code",
@@ -16,7 +22,7 @@ export class MisArchivosComponent implements OnInit {
     py: "code"
   }
   normalTypes = {
-    sheet: "spreadsheet",
+    sheet: "excel",
     word: "word",
     presentation: "powerpoint",
     audio: "music",
@@ -27,20 +33,76 @@ export class MisArchivosComponent implements OnInit {
     html: "code",
     json: "invoice",
     javascript: "code",
-    msdown: "xcel",
+    msdown: "xmark",
     compressed: "zipper",
-    pdf: "pdf"
+    pdf: "pdf",
+    xml: "code"
+  }
+  languages = {
+    ts: "typescript",
+    js: "javascript",
+    css: "css",
+    html: "html",
+    php: "php",
+    xml: "xml",
+    cs: "csharp",
+    json: "javascript",
+    java: "java",
+    javac: "java",
+    py: "python"
   }
   preFiles: any = [];
   toSaveFiles: any = [];
   toReadFiles: any = [];
   droppedFiles: any = [];
   selectedFiles: any = [];
+  checkedFiles: any = [];
   btnActivo = true;
+  showFile = {
+    doI: false,
+    file: {
+      nombre: "", url: "", type: "", usuario: ""
+    } 
+  }
+  uploading: any = {
+    isIt: false,
+    number: 0,
+    manny: 0,
+    progress: "0%",
+    currentFile: ""
+  }
 
-  constructor() { }
+  usuario: any;
 
-  ngOnInit(): void {
+  constructor(private toastr: ToastrService, private archivoService: ArchivoService, private usuarioService: UsuarioService) { 
+    this.usuario = {
+      uid: "",
+      email: ""
+    }
+
+    this.usuarioService.obtenerUsuarioActual().subscribe(data => {
+      this.usuario = data;
+      this.obtenerArchivos();
+    })
+  }
+
+  ngOnInit(): void { 
+  }
+
+  obtenerArchivos(){
+    this.archivoService.obtenerArchivos(this.usuario.uid).subscribe((archivos: Archivo[]) => {
+      this.toReadFiles = archivos;
+    })
+  }
+
+  checkFileList($event: any, archivo: Archivo){
+    if($event.target.checked){
+      this.checkedFiles.push(archivo);
+    }
+    else{
+      const index = this.checkedFiles.findIndex((file: Archivo) => file === archivo);
+      this.checkedFiles.splice(index, 1)
+    }
   }
 
   onFileDropped($event: any) {
@@ -57,7 +119,7 @@ export class MisArchivosComponent implements OnInit {
     }
   }
 
-  saveFiles(){
+  async saveFiles(){
     this.droppedFiles.forEach((element: any) => {
       this.toSaveFiles.push(element);
     });
@@ -67,12 +129,57 @@ export class MisArchivosComponent implements OnInit {
     });
 
     if(this.toSaveFiles.length === 0){
-      return
+      this.toastr.warning("No ha colocado ningun archivo para subir.", "Archivos");
+      return;
     }
 
     this.btnActivo = false;
+    for(let i = 0; i < this.toSaveFiles.length; i++){
+      await this.uploadingFile(this.toSaveFiles[i], i + 1, this.toSaveFiles.length, this.toSaveFiles[i].name)
+    }
 
-    console.log(this.toSaveFiles);
+    this.toSaveFiles = [];
+    this.droppedFiles = [];
+    this.selectedFiles = [];
+    this.preFiles = [];
+    this.uploading = {
+      isIt: false,
+      number: 0,
+      manny: 0,
+      progress: "0%",
+      currentFile: ""
+    };
+    this.btnActivo = true;
+  }
+
+  async uploadingFile(file: any, i: number, count: number, fileName: string){
+    setTimeout(() => {
+      this.archivoService.uploadPercent.subscribe((progress: any) => {
+        this.uploading.isIt = true;
+        this.uploading.number = i;
+        this.uploading.manny = count;
+        this.uploading.progress = progress.progress.toFixed(0) + "%";
+        this.uploading.currentFile = fileName;
+      })
+    }, 0);
+    const data = await this.archivoService.uploadFile(file, this.usuario.uid);
+
+    let archivo: Archivo = {
+      nombre: file.name,
+      usuario: this.usuario.uid,
+      url: data.url,
+      tipo: file.name.split('.').pop(),
+      size: file.size,
+      type: file.type
+    }
+
+    if(data.uploaded){
+      this.archivoService.agregarArchivo(archivo).then(() => { 
+        this.toastr.success("Archivo subido correctamente.", "Archivos", {
+          timeOut: 2000
+        })
+      })
+    }
   }
 
   setImageType(file: any){
@@ -97,20 +204,102 @@ export class MisArchivosComponent implements OnInit {
     return "file";
   }
 
-  formatBytes(bytes: any, decimals: any) {
-    if (bytes === 0) {
-      return '0 Bytes';
-    }
-    const k = 1024;
-    const dm = decimals <= 0 ? 0 : decimals || 2;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-  }
-
   deleteDroppedFile(i: number){
     this.droppedFiles.splice(i, 1);
     this.preFiles.splice(i, 1);
   }
 
+  formatearSize(size: number): string {
+    return this.archivoService.formatBytes(size);
+  }
+
+  deleteFileFromList(archivo: Archivo){
+    this.toastr.info("Si estas seguro de querer eliminar este archivo, dar click a este mensaje.", "Archivo")
+        .onTap
+        .pipe(take(1))
+        .subscribe(() => {
+          this.archivoService.deleteFile(this.usuario.uid + "/" + archivo.nombre).then(data => {
+            if(data){
+              this.archivoService.eliminarArchivo(archivo.id || "").then(() => {
+                this.toastr.error("Archivo eliminado.", "Archivo");
+
+                if(this.checkedFiles.includes(archivo)){
+                  const index = this.checkedFiles.findIndex((file: Archivo) => file === archivo);
+                  this.checkedFiles.splice(index, 1)
+                }
+              });
+            }
+          })
+        });
+  }
+
+  deleteFilesFromList(){
+    this.toastr.info("Si estas seguro de querer eliminar estos archivos, dar click a este mensaje.", "Archivo")
+        .onTap
+        .pipe(take(1))
+        .subscribe(async () => {
+          for(let i = 0; i < this.checkedFiles.length; i++){
+            let data = await this.archivoService.deleteFile(this.usuario.uid + "/" + this.checkedFiles[i].nombre)
+            if(data){
+              await this.archivoService.eliminarArchivo(this.checkedFiles[i].id)
+            }
+          }
+          this.toastr.error("Archivos eliminados.", "Archivo");
+          this.checkedFiles = [];
+        });
+  }
+
+  async openShowFile(archivo: Archivo){
+    this.showFile.doI = true;
+    this.showFile.file = archivo;
+
+    const isCode = (formato: string) => {
+      for(let language in this.languages){
+        if(formato.includes(language)){
+          return true
+        }
+      }
+
+      return false
+    }
+
+    if(!this.showFile.file.type.includes('video') && !this.showFile.file.type.includes('image') && !this.showFile.file.type.includes('audio')){
+      if(isCode(this.showFile.file.nombre.split(".").pop() || "")){
+        await this.setCodeFile();
+      }
+      else{
+        this.showFile.file.type = "doc";
+      }
+    }
+  }
+
+  quitFile(){
+    this.showFile = {
+      doI: false,
+      file: {
+        nombre: "", url: "", type: "", usuario: ""
+      } 
+    }
+  }
+
+  async setCodeFile(){
+    const file = await this.archivoService.getFile(this.showFile.file.usuario + "/" + this.showFile.file.nombre)
+
+    let fileReader = new FileReader(); 
+    fileReader.onload = (e) => { 
+      this.showFile.file.url = fileReader.result?.toString().slice() || ""; 
+      this.showFile.file.type = "code";
+      setTimeout(() => {
+        const code = (this.showFile.file.url || this.codeEle.nativeElement.innerText)
+        const grammar = Prism.languages[this.codeFileLanguage()];
+        const html = Prism.highlight(code, grammar, this.codeFileLanguage());
+        this.codeEle.nativeElement.innerHTML = html
+      }, 200);
+    } 
+    fileReader.readAsText(file);
+  }
+
+  codeFileLanguage(){
+    return this.languages[this.showFile.file.nombre.split(".").pop() as keyof typeof this.languages]
+  }
 }

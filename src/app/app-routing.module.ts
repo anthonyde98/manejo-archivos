@@ -11,6 +11,10 @@ const routes: Routes = [
     path: "mis-archivos",
     loadChildren: () => import('./pages/mis-archivos/mis-archivos.module').then(m => m.MisArchivosModule)
   },
+  {
+    path: "login",
+    loadChildren: () => import('./pages/login/login.module').then(m => m.LoginModule)
+  },
 ];
 
 @NgModule({

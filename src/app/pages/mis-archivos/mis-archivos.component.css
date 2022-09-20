@@ -33,6 +33,15 @@ tr{
     border-radius: 2px;
 }
 
+.table .archivo-nombre{
+    color: rgb(51, 138, 238);
+    cursor: pointer;
+}
+
+.table .archivo-nombre:hover{
+    color: rgb(25, 116, 221);
+}
+
 .form-check-input{
     cursor: pointer
 }
@@ -112,4 +121,74 @@ tr{
 .pre-archivo #pre-archivo-icon{
     font-size: 30px;
     color: rgb(106, 106, 232);
+}
+
+.btns-container{
+    width: fit-content !important;
+}
+
+.fileComponent{
+    background-color: rgba(0, 0, 0, 0.378);
+    height: 100vh;
+    width: 100vw;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.fileComponent i{
+    font-size: 30px;
+    color: white;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: brown;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 3px;
+}
+
+.fileComponent i:hover{
+    box-shadow: 0 3px 4px rgba(0, 0, 0, 0.6);
+}
+
+.fileComponent img{
+    height: fit-content;
+    width: fit-content;
+    max-width: 90vw;
+    max-height: 90vh;
+    display: block;
+    position: relative;
+    border-radius: 10px;
+    margin: 30px;
+}
+
+.fileComponent video{
+    max-width: 90vw;
+    max-height: 90vh;
+    display: block;
+    border-radius: 10px;
+}
+
+.fileComponent ngx-doc-viewer{
+    width: 88vw;
+    height: 90vh;
+    border-radius: 10px;
+}
+
+.fileComponent pre{
+    max-height: 95vh;
+    max-width: 90vw;
+    overflow-x: auto;
+    background-color: rgb(236, 236, 236);
+    border-radius: 10px;
+    padding: 20px;
+} 
+
+pre code{
+    height: 85vh;
 }

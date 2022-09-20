@@ -1,37 +1,8 @@
-<section class="mis-archivos container m-5 mx-auto">
-    <div class="section-title bg-light p-3 rounded w-25 mx-auto">
+<section class="mis-archivos container m-4 mx-auto">
+    <div class="section-title bg-light p-3 w-50 rounded mx-auto mb-5">
         <h2 class="text-center">Banco de archivos</h2>
     </div>
     <div class="content">
-        <div class="banco bg-light p-4 mx-2">
-            <div class="tabla-container">
-                <table class="table">
-                    <tbody>
-                      <tr>
-                        <td><input class="form-check-input" type="checkbox" value="" id="flexCheckDefault"></td>
-                        <td>archivoNombre.pdf</td>
-                        <td>tipo</td>
-                        <td>span</td>
-                        <td><i id="delete-archivo" class="fa-solid fa-xmark"></i></td>
-                      </tr>
-                      <tr>
-                        <td><input class="form-check-input" type="checkbox" value="" id="flexCheckDefault"></td>
-                        <td>archivoNombre.pdf</td>
-                        <td>tipo</td>
-                        <td>size</td>
-                        <td><i id="delete-archivo" class="fa-solid fa-xmark"></i></td>
-                      </tr>
-                      <tr>
-                        <td><input class="form-check-input" type="checkbox" value="" id="flexCheckDefault"></td>
-                        <td>archivoNombre.pdf</td>
-                        <td>tipo</td>
-                        <td>size</td>
-                        <td><i id="delete-archivo" class="fa-solid fa-xmark"></i></td>
-                      </tr>
-                    </tbody>
-                  </table>
-            </div>
-        </div>
         <div class="add-archivos  bg-light p-4 mx-2">
             <h5 class="text-center">Agregar archivos</h5>
             <div class="mt-4 mb-3">
@@ -51,7 +22,74 @@
                     </div>
                 </div>
             </div>
-            <button class="btn btn-primary d-block mx-auto mt-3" (click)="saveFiles()" [disabled]="!btnActivo || (droppedFiles.length === 0 && selectedFiles.length === 0)">Subir archivos</button>
+            <button class="btn btn-primary d-block mx-auto mt-3" 
+            (click)="saveFiles()" 
+            [disabled]="!btnActivo || (droppedFiles.length === 0 && selectedFiles.length === 0)">
+                Subir archivos
+            </button>
+
+            <div class="uploading mt-4" *ngIf="uploading.isIt">
+                <h5 class="text-center mb-4">Subiendo archivos</h5>
+                <div class="progress-content">
+                    <p class="counter text-center">Archivo {{ uploading.number }} de {{ uploading.manny }}</p>
+                    <div class="progress">
+                        <div class="progress-bar" role="progressbar" [style.width]="uploading.progress" aria-valuemin="0" aria-valuemax="100">{{ uploading.progress }}</div>
+                    </div>
+                    <p class="file-name text-center mt-3"><span class="fw-bold">Archivo: </span>{{ uploading.currentFile }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="banco bg-light p-4 mx-2">
+            <h5 class="text-center mb-3">Mis archivos</h5>
+            <div class="btns-container mt-2 mb-1 d-flex">
+                <button class="btn btn-success me-3" 
+                
+                *ngIf="checkedFiles.length > 0">
+                    Utilizar
+                </button>
+                <button class="btn btn-danger" 
+                (click)="deleteFilesFromList()"
+                *ngIf="checkedFiles.length > 0">
+                    Eliminar
+                </button>
+            </div>
+            <div class="tabla-container">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th><i class="fa-solid fa-list"></i></th>
+                            <th>Nombre</th>
+                            <th class="text-center">Tipo</th>
+                            <th class="text-center">Tamaño</th>
+                            <th class="text-center">Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                      <tr *ngFor="let archivo of toReadFiles">
+                        <td><input class="form-check-input" type="checkbox" id="flexCheckDefault" (change)="checkFileList($event, archivo)"></td>
+                        <td class="archivo-nombre" (click)="openShowFile(archivo)">{{ archivo.nombre.length > 20 ? (archivo.nombre | slice:0:17) + '...' + archivo.tipo : archivo.nombre }}</td>
+                        <td class="text-center">{{ archivo.tipo }}</td>
+                        <td class="text-center">{{ formatearSize(archivo.size) }}</td>
+                        <td class="text-center"><i id="delete-archivo" class="fa-solid fa-xmark" (click)="deleteFileFromList(archivo)"></i></td>
+                      </tr>
+                    </tbody>
+                  </table>
+            </div>
         </div>
     </div>
+</section>
+<section class="fileComponent" *ngIf="showFile.doI" oncontextmenu="return false;">
+    <i class="fa-solid fa-xmark" (click)="quitFile()"></i>
+    <img *ngIf="showFile.file.type.includes('image')" [src]="showFile.file.url" [alt]="showFile.file.nombre" [title]="showFile.file.nombre">
+    <video *ngIf="showFile.file.type.includes('video')" controls controlslist="nodownload">
+        <source [src]="showFile.file.url" [type]="showFile.file.type">
+        Your browser does not support the video tag.
+    </video>
+    <ngx-doc-viewer
+    [url]="this.showFile.file.url"
+    viewer="google"
+    *ngIf="showFile.file.type === 'doc'"
+    ></ngx-doc-viewer>
+    <!-- <pre *ngIf="showFile.file.type === 'code'"><code class="language-{{ codeFileLanguage }}">{{ showFile.file.url }}</code></pre> -->
+    <pre *ngIf="showFile.file.type === 'code'" class="language-{{ codeFileLanguage }}"><code #codeEle class="language-{{ codeFileLanguage }}"></code></pre>
 </section>
